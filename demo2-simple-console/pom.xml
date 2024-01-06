@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>demo2-simple-console</artifactId>
+    <version>0.0.3-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
+        <maven.clean.failOnError>false</maven.clean.failOnError>
+        
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        
+        <mainClass>com.example.demo2.AppCli</mainClass>
+    </properties>
+    
+    <repositories>
+        <repository>
+            <id>repsy-lbnet-releases</id>
+            <url>https://repo.repsy.io/mvn/lilianne_blaze/lbnet-releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>repsy-lbnet-snapshots</id>
+            <url>https://repo.repsy.io/mvn/lilianne_blaze/lbnet-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repsy-lbnet-releases</id>
+            <url>https://repo.repsy.io/mvn/lilianne_blaze/lbnet-releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+        <pluginRepository>
+            <id>repsy-lbnet-snapshots</id>
+            <url>https://repo.repsy.io/mvn/lilianne_blaze/lbnet-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+        </dependency>        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.14</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${mainClass}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>lbfork-launch4j-maven-plugin</groupId>
+                <artifactId>lbfork-launch4j-maven-plugin</artifactId>
+                <version>2.4.5-SNAPSHOT</version>
+                <!--<extensions>true</extensions>-->
+                <executions>
+                    <execution>
+                        <id>l4j-clui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <headerType>console</headerType> <!-- console, gui, default is console -->
+                    <requireAdmin>false</requireAdmin> <!-- default is false -->
+                    
+                    
+                    <!--<outfile>target/encc.exe</outfile>-->
+                    <!--<jar>target/encc-1.0.jar</jar>-->
+                    <errTitle>encc</errTitle>
+                    <classPath>
+                        <mainClass>${mainClass}</mainClass>
+                        <addDependencies>false</addDependencies>
+                        <preCp>anything</preCp>
+                    </classPath>
+                    <jre>
+                        <minVersion>21</minVersion>
+                        <path>%JAVA_HOME%;%PATH%</path>
+                        <opts>
+                            <opt>-Dvar=value</opt>
+                        </opts>
+                    </jre>
+                    <versionInfo>
+                        <fileVersion>1.2.3.4</fileVersion>
+                        <txtFileVersion>txt file version?</txtFileVersion>
+                        <fileDescription>a description</fileDescription>
+                        <copyright>my copyright</copyright>
+                        <productVersion>4.3.2.1</productVersion>
+                        <txtProductVersion>txt product version</txtProductVersion>
+                        <productName>E-N-C-C</productName>
+                        <internalName>ccne</internalName>
+                        <originalFilename>original.exe</originalFilename>
+                    </versionInfo>
+                </configuration>
+
+            </plugin>
+
+        </plugins>
+
+
+    </build>
+
+</project>
