@@ -73,8 +73,10 @@ import java.util.stream.Collectors;
 public class Launch4jMojo extends AbstractMojo {
 
     private static final String LAUNCH4J_ARTIFACT_ID = "launch4j";
+//    private static final String LAUNCH4J_ARTIFACT_ID = "lbfork-launch4j";
 
     private static final String LAUNCH4J_GROUP_ID = "net.sf.launch4j";
+//    private static final String LAUNCH4J_GROUP_ID = "lbfork-launch4j";
 
     /**
      * Maven Session.

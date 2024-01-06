@@ -1,12 +1,15 @@
 *.ipr
 *.iml
 *.iws
-target/*
 .settings/*
 .project
 .classpath
 .factorypath
-/target
 .idea
 .java-version
 .mvn/wrapper/maven-wrapper.jar
+
+dependency-reduced-pom.xml
+
+target
+*.bak
