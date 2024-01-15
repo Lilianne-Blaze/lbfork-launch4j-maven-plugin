@@ -53,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
@@ -72,12 +73,18 @@ import java.util.stream.Collectors;
 )
 public class Launch4jMojo extends AbstractMojo {
 
-    private static final String LAUNCH4J_ARTIFACT_ID = "launch4j";
-//    private static final String LAUNCH4J_ARTIFACT_ID = "lbfork-launch4j";
+    @Parameter(defaultValue = "launch4j", required = true)
+    private String launch4jArtifactId;
 
-    private static final String LAUNCH4J_GROUP_ID = "net.sf.launch4j";
-//    private static final String LAUNCH4J_GROUP_ID = "lbfork-launch4j";
+    @Parameter(defaultValue = "net.sf.launch4j", required = true)
+    private String launch4jGroupId;
 
+    // intentionally non-static non-final so it can be hacked with reflection if someone really needs to
+    private String DEF_REQADMMAN_RES = "META-INF/resources/manifest-requireAdminRights-v1.xml";
+
+    // intentionally non-static non-final so it can be hacked with reflection if someone really needs to
+    private String DEF_REQADMMAN_FILE = "target/classes/META-INF/manifest-requireAdminRights.xml";
+    
     /**
      * Maven Session.
      */
@@ -137,7 +144,7 @@ public class Launch4jMojo extends AbstractMojo {
      * in order to avoid opening a DOS window.
      * Choosing gui also enables other options like taskbar icon and a splash screen.
      */
-    @Parameter
+    @Parameter(defaultValue = "console", required = true)
     private String headerType;
 
     /**
@@ -238,6 +245,12 @@ public class Launch4jMojo extends AbstractMojo {
      */
     @Parameter
     private File icon;
+
+    /**
+     * Whether the executable should ask for admin rights (Windows only).
+     */
+    @Parameter(defaultValue = "false")
+    private boolean requireAdminRights;
 
     /**
      * Object files to include. Used for custom headers only.
@@ -350,6 +363,10 @@ public class Launch4jMojo extends AbstractMojo {
             getLog().debug("Skipping execution of the plugin");
             return;
         }
+	
+        processRequireAdminRights();
+
+        fillSensibleJreDefaults();
 
         if (!disableVersionInfoDefaults) {
             try {
@@ -491,7 +508,50 @@ public class Launch4jMojo extends AbstractMojo {
             }
         }
     }
+    
+    private void fillSensibleJreDefaults() throws MojoExecutionException {
+        if (jre == null) {
+            jre = new Jre();
+        }
 
+        if (jre.path == null) {
+            String pathDef = "%JAVA_HOME%;%PATH%";
+            getLog().warn("jre.path not set, defaulting to \"" + pathDef + "\"");
+            jre.path = pathDef;
+        }
+    }
+
+    private void processRequireAdminRights() throws MojoExecutionException {
+        if (requireAdminRights) {
+            getLog().warn("Modifying the resulting exe to always require Admin rights.");
+            getLog().warn("Make sure it's necessary. Consider writing your own manifest file.");
+
+            if (manifest != null) {
+                getLog().warn("manifest param is already set, overriding. Make sure that's what's intended.");
+            }
+
+            try {
+                File metaInfDir = new File(basedir, "target/classes/META-INF");
+                metaInfDir.mkdir();
+                
+                File manFile = new File(basedir, DEF_REQADMMAN_FILE);
+                byte[] manBytes = FileUtils.readResourceAsBytes(DEF_REQADMMAN_RES);
+
+                FileUtils.writeBytesIfDiff(manFile, manBytes);
+
+                byte[] savedBytes = FileUtils.readBytes(manFile);
+                if (Arrays.equals(manBytes, savedBytes)) {
+                    getLog().info("Manifest file written to " + manFile);
+                }
+
+                manifest = manFile;
+            } catch (Exception e) {
+                getLog().error(e);
+                throw new MojoExecutionException(e);
+            }
+        }
+    }
+	
     /**
      * Prepares a little directory for launch4j to do its thing. Launch4j needs a bunch of object files
      * (in the w32api and head directories) and the ld and windres binaries (in the bin directory).
@@ -545,7 +605,7 @@ public class Launch4jMojo extends AbstractMojo {
      */
     private File unpackWorkDir(Artifact artifact) throws MojoExecutionException {
 
-	// trying normal search first, all-repo search if normal failed
+        getLog().debug("Trying normal search first, all-repo search if normal fails");
         LocalArtifactRequest request = new LocalArtifactRequest(artifact, null, null);
         LocalArtifactResult localArtifact = repositorySystemSession.getLocalRepositoryManager().find(repositorySystemSession, request);
         if (localArtifact == null || localArtifact.getFile() == null) {
@@ -554,11 +614,11 @@ public class Launch4jMojo extends AbstractMojo {
             request = new LocalArtifactRequest(artifact, repositories, null);
             localArtifact = repositorySystemSession.getLocalRepositoryManager().find(repositorySystemSession, request);
             if (localArtifact == null || localArtifact.getFile() == null) {
-		String err = "Cannot obtain file path to " + artifact + " with both normal and all-repo search";
+                String err = "Cannot obtain file path to " + artifact + " with both normal and all-repo search";
                 getLog().error(err);
                 throw new MojoExecutionException(err);
             }
-	}
+        }
 
         boolean artifactIsSnapshot = !artifact.getVersion().equals(artifact.getBaseVersion());
 	
@@ -725,7 +785,7 @@ public class Launch4jMojo extends AbstractMojo {
             throw new MojoExecutionException("Sorry, Launch4j doesn't support the '" + os + "' OS.");
         }
 
-        Artifact artifact = new DefaultArtifact(LAUNCH4J_GROUP_ID, LAUNCH4J_ARTIFACT_ID, "workdir-" + plat, "jar", getLaunch4jVersion());
+        Artifact artifact = new DefaultArtifact(launch4jGroupId, launch4jArtifactId, "workdir-" + plat, "jar", getLaunch4jVersion());
         try {
             ArtifactRequest request = new ArtifactRequest(artifact, repositories, null);
 
@@ -845,8 +905,8 @@ public class Launch4jMojo extends AbstractMojo {
         ).collect(Collectors.toSet());
 
         for (Artifact artifact : pluginArtifacts) {
-            if (LAUNCH4J_GROUP_ID.equals(artifact.getGroupId()) &&
-                    LAUNCH4J_ARTIFACT_ID.equals(artifact.getArtifactId())
+            if (launch4jGroupId.equals(artifact.getGroupId()) &&
+                    launch4jArtifactId.equals(artifact.getArtifactId())
                     && "core".equals(artifact.getClassifier())) {
 
                 version = artifact.getVersion();
@@ -890,6 +950,7 @@ public class Launch4jMojo extends AbstractMojo {
                 ", stayAlive=" + stayAlive +
                 ", restartOnCrash=" + restartOnCrash +
                 ", icon=" + icon +
+                ", requireAdminRights=" + requireAdminRights +
                 ", objs=" + objs +
                 ", libs=" + libs +
                 ", vars=" + vars +
