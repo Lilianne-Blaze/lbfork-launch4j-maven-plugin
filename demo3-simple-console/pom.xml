@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
-    <artifactId>demo2-simple-console</artifactId>
+    <artifactId>demo3-simple-console</artifactId>
     <version>0.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -17,7 +17,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         
-        <mainClass>com.example.demo2.AppCli</mainClass>
+        <mainClass>com.example.demo3.AppCli</mainClass>
     </properties>
     
     <repositories>
@@ -103,6 +103,15 @@
                 <artifactId>lbfork-launch4j-maven-plugin</artifactId>
                 <version>2.4.8-SNAPSHOT</version>
                 <!--<extensions>true</extensions>-->
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sf.launch4j</groupId>
+                        <artifactId>launch4j</artifactId>
+                        <version>3.50-LBTEST20240111</version>
+                        <!--<scope>runtime</scope>-->
+                        <classifier>core</classifier>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>l4j-clui</id>
@@ -113,9 +122,16 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <headerType>console</headerType> <!-- console, gui, default is console -->
+                    <headerType>customExe</headerType> <!-- console, gui, default is console -->
                     <requireAdmin>false</requireAdmin> <!-- default is false -->
                     
+                    
+                    <vars>
+                        <var>testVar=testValue</var>
+                        <var>testVar2=testValue2</var>
+                        <var>launch4j.customExe=C:\Local_Documents\GitHub2024_synced\sandbox-pascal1-prv\pascal\sling4j-alpha0\sling4j_alpha0.exe</var>
+                        <var>launch4j.keepTempFiles=true</var>
+                    </vars>
                     
                     <!--<outfile>target/encc.exe</outfile>-->
                     <!--<jar>target/encc-1.0.jar</jar>-->
